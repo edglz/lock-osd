@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.10.0.schema.json
+PackageIdentifier: edglz.LockOsd
+PackageVersion: 1.0.0
+PackageLocale: en-US
+Publisher: edglz
+PackageName: LockOsd
+License: Proprietary
+ShortDescription: Native Windows 11 on-screen indicator for Caps Lock, Num Lock and Scroll Lock.
+Tags:
+- caps-lock
+- num-lock
+- osd
+- winui
+ManifestType: defaultLocale
+ManifestVersion: 1.10.0
