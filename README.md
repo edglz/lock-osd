@@ -6,11 +6,15 @@ WinUI 3 (Windows App SDK) on .NET 10: acrylic backdrop, system theme and accent,
 The OSD is click-through, never takes focus, and appears on the display of the foreground window. It polls
 key state with `GetKeyState`, so there is no global keyboard hook and it never sees what you type.
 
+![Caps Lock on, in Spanish](docs/caps-on-es.png)
+![Caps Lock off, in Spanish](docs/caps-off-es.png)
+![Caps Lock on, in English](docs/caps-on-en.png)
+
 ## Install
 
 Requires Windows 11 22H2 or later, x64.
 
-Download `LockOsd-Setup-1.0.0-x64.exe` from
+Download the latest `LockOsd-Setup-<version>-x64.exe` from
 [Releases](https://github.com/edglz/lock-osd/releases) and run it. It installs for the current user, without admin
 rights, and starts with Windows. It also needs the
 [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0). The installer is not signed, so
@@ -25,6 +29,50 @@ winget install --manifest winget
 ```
 
 This path also installs the .NET runtime if it is missing.
+
+## Configuration
+
+Settings are in `%APPDATA%\LockOsd\config.yaml`, created on first run. Changes apply when you save the file. If it
+has an error, the app keeps its previous settings and writes the reason to `%LOCALAPPDATA%\LockOsd\events.log`.
+
+```yaml
+language: auto        # auto follows the Windows display language
+
+keys:
+  capsLock: true
+  numLock: true
+  scrollLock: true
+
+display:
+  durationMs: 1600    # 300 to 30000
+  position: bottom    # bottom or top
+  marginDip: 24       # distance from the screen edge, 0 to 1000
+  monitor: active     # active follows the foreground window, primary uses the main display
+```
+
+## Languages
+
+English (`en`) and Spanish (`es`) are built in. `es-MX` falls back to `es`, and anything unknown to English.
+
+To add or override a language, create `%APPDATA%\LockOsd\locales\<code>.yaml`. Missing values use English:
+
+```yaml
+capsLock: Verr. Maj
+numLock: Verr. Num
+scrollLock: Arrêt défil
+enabled: "{key} activé"
+disabled: "{key} désactivé"
+```
+
+To include a language in the app, add the same file to `locales` in this repository.
+
+## Support
+
+If this is useful to you, you can [buy me a coffee](https://buymeacoffee.com/edggdev).
+
+## License
+
+[MIT](LICENSE)
 
 ## Motion
 
@@ -50,7 +98,7 @@ Needs Inno Setup (`winget install JRSoftware.InnoSetup --scope user`). Build `di
 
 ```powershell
 & "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\LockOsd.iss
-(Get-FileHash artifacts\LockOsd-Setup-1.0.0-x64.exe -Algorithm SHA256).Hash
+(Get-FileHash artifacts\LockOsd-Setup-<version>-x64.exe -Algorithm SHA256).Hash
 ```
 
 The installer is per-user, needs no admin rights, and goes to `%LOCALAPPDATA%\Programs\LockOsd`. It registers
