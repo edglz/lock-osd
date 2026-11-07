@@ -1,0 +1,23 @@
+# LockOsd settings. Changes apply when you save this file.
+# If the file has an error, the app keeps its previous settings and writes the
+# reason to %LOCALAPPDATA%\LockOsd\events.log.
+
+# auto follows the Windows display language. Built in: en, es.
+# To add a language, create locales\<code>.yaml next to this file.
+language: auto
+
+# Which keys show the indicator.
+keys:
+  capsLock: true
+  numLock: true
+  scrollLock: true
+
+display:
+  # How long the indicator stays on screen, in milliseconds (300 to 30000).
+  durationMs: 1600
+  # bottom or top.
+  position: bottom
+  # Distance from the screen edge, in device-independent pixels (0 to 1000).
+  marginDip: 24
+  # active follows the foreground window. primary always uses the main display.
+  monitor: active

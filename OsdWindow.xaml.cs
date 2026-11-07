@@ -23,7 +23,6 @@ namespace LockOsd;
 public sealed partial class OsdWindow : Window
 {
     private const double HeightDip = 48;
-    private const double BottomMarginDip = 24;
     private const double SlideDip = 24;
     private const float ContentRiseDip = 6;
     private const string LockGlyph = "";
@@ -35,7 +34,6 @@ public sealed partial class OsdWindow : Window
     private static readonly TimeSpan ContentInDuration = TimeSpan.FromMilliseconds(167);
 
     private readonly IntPtr _hwnd;
-    private readonly string[] _longestLabels;
     private readonly DesktopAcrylicController _acrylic = new();
     private readonly SystemBackdropConfiguration _backdropConfig = new();
     private readonly UISettings _uiSettings = new();
@@ -46,14 +44,17 @@ public sealed partial class OsdWindow : Window
 
     // Kept in a field so the GC does not collect the delegate while native code holds it.
     private SubclassProc? _windowProc;
+    private IReadOnlyList<string> _labels;
+    private DisplayConfig _display;
     private (string Text, bool IsOn) _pendingContent;
     private bool _isSwappingContent;
 
-    public OsdWindow(IEnumerable<string> keyNames)
+    public OsdWindow(IReadOnlyList<string> labels, DisplayConfig display)
     {
         InitializeComponent();
         _hwnd = WindowNative.GetWindowHandle(this);
-        _longestLabels = keyNames.Select(name => Label(name, isOn: false)).ToArray();
+        _labels = labels;
+        _display = display;
         _measureText.Style = StateText.Style;
 
         ElementCompositionPreview.SetIsTranslationEnabled(ContentPanel, true);
@@ -64,7 +65,7 @@ public sealed partial class OsdWindow : Window
         _motion = new WindowMotion(_hwnd, queue, () => AppWindow.Hide());
 
         _holdTimer = queue.CreateTimer();
-        _holdTimer.Interval = TimeSpan.FromMilliseconds(1600);
+        _holdTimer.Interval = TimeSpan.FromMilliseconds(display.DurationMs);
         _holdTimer.IsRepeating = false;
         _holdTimer.Tick += (_, _) => Dismiss();
 
@@ -73,9 +74,16 @@ public sealed partial class OsdWindow : Window
         WarmUp();
     }
 
-    public void ShowState(string keyName, bool isOn)
+    /// <summary>Takes effect the next time the OSD is shown.</summary>
+    public void ApplySettings(IReadOnlyList<string> labels, DisplayConfig display)
     {
-        var text = Label(keyName, isOn);
+        _labels = labels;
+        _display = display;
+        _holdTimer.Interval = TimeSpan.FromMilliseconds(display.DurationMs);
+    }
+
+    public void ShowState(string text, bool isOn)
+    {
         if (_uiSettings.AnimationsEnabled && _motion.IsOnScreen)
         {
             CrossfadeContent(text, isOn);
@@ -85,7 +93,7 @@ public sealed partial class OsdWindow : Window
             SnapContent(text, isOn);
         }
 
-        PlaceOnActiveDisplay();
+        PlaceOnDisplay();
 
         if (!AppWindow.IsVisible)
         {
@@ -106,9 +114,6 @@ public sealed partial class OsdWindow : Window
         _holdTimer.Start();
     }
 
-    private static string Label(string keyName, bool isOn) =>
-        $"{keyName} {(isOn ? "activado" : "desactivado")}";
-
     private void Dismiss()
     {
         if (_uiSettings.AnimationsEnabled)
@@ -125,8 +130,8 @@ public sealed partial class OsdWindow : Window
     // real key press animates from frame one instead of dropping the start of the entrance.
     private void WarmUp()
     {
-        SnapContent(Label(string.Empty, isOn: false), isOn: false);
-        PlaceOnActiveDisplay();
+        SnapContent(_labels[0], isOn: false);
+        PlaceOnDisplay();
         _motion.ApplyHidden();
         AppWindow.Show(false);
         _holdTimer.Start();
@@ -255,10 +260,10 @@ public sealed partial class OsdWindow : Window
         _backdropConfig.Theme = isDark ? SystemBackdropTheme.Dark : SystemBackdropTheme.Light;
     }
 
-    private void PlaceOnActiveDisplay()
+    private void PlaceOnDisplay()
     {
         var foreground = GetForegroundWindow();
-        var area = foreground != IntPtr.Zero
+        var area = _display.Monitor == OsdMonitor.Active && foreground != IntPtr.Zero
             ? DisplayArea.GetFromWindowId(Win32Interop.GetWindowIdFromWindow(foreground), DisplayAreaFallback.Primary)
             : DisplayArea.Primary;
 
@@ -268,12 +273,16 @@ public sealed partial class OsdWindow : Window
         var width = (int)Math.Ceiling(MeasureFixedWidth() * scale);
         var height = (int)Math.Ceiling(HeightDip * scale);
         var work = area.WorkArea;
+        var margin = (int)Math.Round(_display.MarginDip * scale);
+        var isTop = _display.Position == OsdPosition.Top;
 
         var rest = new PointInt32(
             work.X + ((work.Width - width) / 2),
-            work.Y + work.Height - height - (int)Math.Round(BottomMarginDip * scale));
+            isTop ? work.Y + margin : work.Y + work.Height - height - margin);
 
-        _motion.SetRest(rest, (int)Math.Round(SlideDip * scale));
+        // The hidden position is toward the nearest screen edge, so the OSD slides in from it.
+        var slidePx = (int)Math.Round(SlideDip * scale);
+        _motion.SetRest(rest, isTop ? -slidePx : slidePx);
         AppWindow.Resize(new SizeInt32(width, height));
     }
 
@@ -282,7 +291,7 @@ public sealed partial class OsdWindow : Window
     {
         Root.Measure(new Size(double.PositiveInfinity, HeightDip));
         var currentText = MeasureText(StateText.Text);
-        var longestText = _longestLabels.Max(MeasureText);
+        var longestText = _labels.Max(MeasureText);
         return Root.DesiredSize.Width - currentText + longestText;
     }
 

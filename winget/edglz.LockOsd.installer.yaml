@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
 PackageIdentifier: edglz.LockOsd
-PackageVersion: 1.0.0
+PackageVersion: 1.1.0
 MinimumOSVersion: 10.0.22621.0
 InstallerType: inno
 Scope: user
@@ -11,7 +11,7 @@ Dependencies:
   - PackageIdentifier: Microsoft.DotNet.DesktopRuntime.10
 Installers:
 - Architecture: x64
-  InstallerUrl: https://github.com/edglz/lock-osd/releases/download/v1.0.0/LockOsd-Setup-1.0.0-x64.exe
-  InstallerSha256: 39E829B18EBE800B34403E17081C8CB81024C6C9F4508F0708D68A2DEFF41439
+  InstallerUrl: https://github.com/edglz/lock-osd/releases/download/v1.1.0/LockOsd-Setup-1.1.0-x64.exe
+  InstallerSha256: 058E72FEDD591AEC0AD27889190231351D38D9E4125E44B0922DF1FEB0C835CD
 ManifestType: installer
 ManifestVersion: 1.10.0

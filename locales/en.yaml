@@ -1,0 +1,5 @@
+capsLock: Caps Lock
+numLock: Num Lock
+scrollLock: Scroll Lock
+enabled: "{key} on"
+disabled: "{key} off"

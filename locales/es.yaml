@@ -1,0 +1,5 @@
+capsLock: Bloq Mayús
+numLock: Bloq Num
+scrollLock: Bloq Despl
+enabled: "{key} activado"
+disabled: "{key} desactivado"

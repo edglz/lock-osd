@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.UI.Dispatching;
@@ -13,15 +12,16 @@ public partial class App : Application
     private const int VkNumLock = 0x90;
     private const int VkScroll = 0x91;
 
-    private static readonly (int Vk, string Name)[] Keys =
+    private static readonly (int Vk, LockKey Key)[] Keys =
     [
-        (VkCapital, "Bloq Mayús"),
-        (VkNumLock, "Bloq Num"),
-        (VkScroll, "Bloq Despl"),
+        (VkCapital, LockKey.CapsLock),
+        (VkNumLock, LockKey.NumLock),
+        (VkScroll, LockKey.ScrollLock),
     ];
 
     private readonly bool[] _states = new bool[Keys.Length];
     private Mutex? _singleInstance;
+    private ConfigStore? _config;
     private OsdWindow? _osd;
     private DispatcherQueueTimer? _poll;
 
@@ -45,7 +45,11 @@ public partial class App : Application
         }
 
         DiagnosticLog.Event($"start pid={Environment.ProcessId} version={typeof(App).Assembly.GetName().Version}");
-        _osd = new OsdWindow(Keys.Select(key => key.Name));
+
+        var queue = DispatcherQueue.GetForCurrentThread();
+        _config = new ConfigStore(queue);
+        _osd = new OsdWindow(_config.Strings.AllLabels(), _config.Config.Display);
+        _config.Changed += () => _osd.ApplySettings(_config.Strings.AllLabels(), _config.Config.Display);
 
         // Baseline only: launching must not flash the OSD for keys that are already on.
         for (var i = 0; i < Keys.Length; i++)
@@ -54,7 +58,7 @@ public partial class App : Application
         }
 
         // Polling needs no global keyboard hook, so this app never sees what the user types.
-        _poll = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _poll = queue.CreateTimer();
         _poll.Interval = TimeSpan.FromMilliseconds(60);
         _poll.IsRepeating = true;
         _poll.Tick += (_, _) => CheckKeys();
@@ -69,10 +73,24 @@ public partial class App : Application
             if (isOn != _states[i])
             {
                 _states[i] = isOn;
-                DiagnosticLog.Event($"key {Keys[i].Name}={(isOn ? "on" : "off")}");
-                _osd?.ShowState(Keys[i].Name, isOn);
+                DiagnosticLog.Event($"key {Keys[i].Key}={(isOn ? "on" : "off")}");
+                if (IsEnabled(Keys[i].Key))
+                {
+                    _osd?.ShowState(_config!.Strings.Label(Keys[i].Key, isOn), isOn);
+                }
             }
         }
+    }
+
+    private bool IsEnabled(LockKey key)
+    {
+        var keys = _config!.Config.Keys;
+        return key switch
+        {
+            LockKey.CapsLock => keys.CapsLock,
+            LockKey.NumLock => keys.NumLock,
+            _ => keys.ScrollLock,
+        };
     }
 
     private static bool IsToggled(int vk) => (GetKeyState(vk) & 1) != 0;

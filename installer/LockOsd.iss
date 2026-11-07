@@ -1,7 +1,7 @@
 ; Per-user installer: no admin rights, and no UAC prompt under winget.
 ; Build dist first (see README), then run ISCC on this file.
 
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 
 [Setup]
 AppId={{7C3E9A52-4F1D-4B86-9E27-1D5A8C60F3B4}

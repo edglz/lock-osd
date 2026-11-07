@@ -5,7 +5,7 @@
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22621.0</TargetPlatformMinVersion>
     <RootNamespace>LockOsd</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -18,6 +18,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="config.default.yaml" LogicalName="config.default.yaml" />
+    <EmbeddedResource Include="locales\*.yaml" LogicalName="locales.%(Filename).yaml" />
   </ItemGroup>
 
 </Project>
