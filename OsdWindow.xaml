@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid
         x:Name="Root"
-        Background="Transparent"
+        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
         BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
         BorderThickness="1"
         CornerRadius="8"
